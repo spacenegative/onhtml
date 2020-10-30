@@ -12,13 +12,13 @@ The case for an html dsl instead of an html template is best described in this <
 use	html::*
 #[get("/ads/jobs/login/")] 
 pub async fn get_ads_jobs_login() ->impl Responder  {
-	let mut x = input("") .placeholder("ΝΟΥΜΕΡΟ ΑΓΓΕΛΙΑΣ") .name("key") .n()  ;
-	x += &input("") .placeholder("ΚΩΔΙΚΟΣ ΑΓΓΕΛΙΑΣ") .name("pass") .n()  ;
+	let mut x = input("") .placeholder("something") .name("key") .n()  ;
+	x += &input("") .placeholder("something") .name("pass") .n()  ;
 	x += &button("ok") .value("ok") .n()  ;
 	x = form(&x) .method(Method::Post) .action("auth/") .n()  ;
-	x = div(&x) .n()  ;
+	x = div(&x) .class("something") .id("something") .data("something" ,"something") .n()  ;
 	let mut h =  Html  {
-		title: "Nailartist".to_string() , 
+		title: "something".to_string() , 
 		desc: "".to_string() , 
 		kws: vec![] , 
 		theme: "#111111".to_string() , 
