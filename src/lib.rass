@@ -1,0 +1,775 @@
+#![allow(non_snake_case)]
+use duplicate::duplicate
+use std::io::prelude::*
+use std::time::
+	SystemTime,
+	UNIX_EPOCH,
+;
+
+//ENUMS
+pub enum TextareaWrap
+	Hard, Soft,
+pub enum Type
+	Button, Checkbox, Color , Date, DatetimeLocal, Email, File, Hidden, Image, Month, Number,  Password, Radio, Range, Reset, Search, Submit, Tel, Text, Time, Url, Week,
+pub enum Preload
+	Auto, Metadata, None,
+pub enum Enctype
+	Application, Multipart, Text,
+pub enum Method
+	Get, Post,
+pub enum Target
+	Blank, Self_, Parent, Top,
+pub enum FormRel
+	External, Help, License, Next, Nofollow, Noopener, Noreferrer, Opener, Prev, Search,
+pub enum ARel
+	Alternate ,Author ,Bookmark ,External ,Help ,License ,Next ,Nofollow ,Noreferrer ,Noopener  ,Prev ,Search ,Tag ,
+pub enum Refpolicy
+	NoReferrer ,NoReferrerWhenDowngrade ,Origin ,OriginWhenCrossOrigin ,UnsafeUrl ,
+pub enum ListType
+	N ,A ,Aa ,I ,Ii ,
+
+struct Tag
+	pub name: String ,
+	pub atts: Vec<(String,String)> ,
+	pub val: String ,
+impl Tag
+	fn new( name:String , val:String )->Tag
+		---> Tag
+			name ,
+			atts:  vec![] ,
+			val ,
+	fn att( &mut self , name:String , val:String ) -> &mut Self
+		self.atts.push( ( name , val ) )
+		---> self
+
+pub struct Html
+	pub title: String,
+	pub desc: String,
+	pub kws: Vec<String>,
+	pub content: String,
+	pub theme: String,
+	pub scale: u32,
+	pub css: Vec<String>,
+	pub js: Vec<(JAVASCRIPT,String)>,
+	pub favicon: String,
+pub enum JAVASCRIPT
+	Module ,Script ,
+impl Html
+	pub fn version( &mut self ) -> &mut Html
+		let t = SystemTime::now().duration_since( UNIX_EPOCH )   .expect( "ERR: Time is before Unix Epoch" ).as_millis()
+		let ver = !!( "?v={}" , t )
+		for link in &mut self.css
+			link.push_str( &ver )
+		for script in &mut self.js
+			script .1 .push_str( &ver )
+		self.favicon.push_str( &ver )
+		---> self
+	pub fn print( &mut self ) -> String
+		if self.desc.len() > 120
+			panic!( !!( "\n\n\tHtml.desc IS {} CHARS BUT MUST BE UP TO 120\n\n"    , self.desc.len() ) )
+		if self.title.len() > 60
+			panic!( !!( "\n\n\tHtml.title IS {} CHARS BUT MUST BE UP TO 60\n\n"    , self.title.len() ) )
+		if self.kws.len() > 10
+			panic!( !!( "\n\n\tHtml.kws HAS {} KEYWORDS, BUT MUST BE UP TO 10\n\n"    , self.title.len() ) )
+		let html = self.version()
+		let mut x = !!( "<title>{}</title>\n" , html.title )
+		x.push_str( "<meta http-equiv='Content-Type' content='text/html; charset=utf-8'>\n" )
+		x.push_str( &!!( "<meta name='description' content='{}'>\n" , html.desc ) )
+		if html.kws.len() > 0
+			let mut kws = ""`
+			for k in &html.kws
+				kws += &!!( "{}, " , k )
+			let kws = kws[..kws.len()-2]`
+			x.push_str( &!!( "<meta name='keywords' content='{}'>\n" , kws ) )
+		x.push_str( &!!( "<meta name='viewport' content='width=device-width, initial-scale=1,    maximum-scale={}'>\n" , html.scale ) )
+		x.push_str( &!!( "<meta name='theme-color' content='{}'>\n" , html.theme ) )
+		for i in &html.css
+			x.push_str( &!!( "<link rel='stylesheet' href='{}' />\n" , i ) )
+		x.push_str( &!!( "<link rel='shortcut icon' href='{}' />\n" , &html.favicon ) )
+		x = !!( "<!DOCTYPE html>\n<html>\n{}\n<body>\n{}\n</body>\n" , x , html.content )
+		for i in &html.js
+			match i .0
+				JAVASCRIPT::Script =>
+					x.push_str(&!!("<script src='{}'></script>\n" ,i .1))
+				JAVASCRIPT::Module =>
+					x.push_str(&!!("<script type='module'       src='{}'></script>\n" ,i .1))
+		x.push_str( "</html>" )
+		---> x
+	pub fn write( &mut self , file:&str )
+		let p = std::path::Path::new( file )
+		let mut f = std::fs::File::create( &p )   .expect( !!( "ERR: COULD NOT CREATE FILE {}" , file ).as_str() )
+		let h = self.print()
+		f.write_all( h.as_bytes())   .expect( !!("ERR: COULD NOT WRITE TO {}",p.display()).as_str() )
+
+//T
+#[duplicate(T; [B]; [Label]; [Datalist]; [Code]; [Article]; [Aside]; [Section]; [P]; [Ol]; [Ul]; [Li]; [Option]; [Pre]; [Canvas]; [Blockquote]; [Source]; [Span]; [A]; [Form]; [Template]; [Video]; [Textarea]; [Select]; [H1]; [H2]; [H3]; [H4]; [H5]; [H6]; [Button]; [Div]; [Img]; [Input] )]
+pub struct T( Tag ) ;
+#[duplicate(f name T ; [b]["b"][B]; [label]["label"][Label]; [datalist]["datalist"][Datalist]; [code]["code"][Code]; [article]["article"][Article]; [aside]["aside"][Aside]; [section]["section"][Section]; [p]["p"][P]; [ol]["ol"][Ol]; [ul]["ul"][Ul]; [li]["li"][Li]; [option]["option"][Option]; [pre]["pre"][Pre]; [canvas]["canvas"][Canvas]; [blockquote]["blockquote"][Blockquote]; [source]["source"][Source]; [span]["span"][Span]; [a]["a"][A]; [form]["form"][Form]; [template]["template"][Template]; [video]["video"][Video]; [textarea]["textarea"][Textarea]; [select]["select"][Select]; [h1]["h1"][H1]; [h2]["h2"][H2]; [h3]["h3"][H3]; [h4]["h4"][H4]; [h5]["h5"][H5]; [h6]["h6"][H6]; [button]["button"][Button]; [div]["div"][Div]; [img]["img"][Img]; [input]["input"][Input] )]
+pub    fn     f( val:&str ) -> T
+	let t = Tag::new( name` , val` )
+	---> T( t )
+#[duplicate(T; [B]; [Label]; [Datalist]; [Code]; [Article]; [Aside]; [Section]; [P]; [Ol]; [Ul]; [Li]; [Option]; [Pre]; [Canvas]; [Blockquote]; [Source]; [Span]; [A]; [Form]; [Template]; [Video]; [Textarea]; [Select]; [H1]; [H2]; [H3]; [H4]; [H5]; [H6]; [Button]; [Div]; [Img]; [Input] )]
+impl T
+	pub fn id( &mut self , val:&str ) -> &mut Self
+		self.0.att( "id"` , val` )
+		---> self
+	pub fn class( &mut self , val:&str ) -> &mut Self
+		self.0.att( "class"` , val` )
+		---> self
+	pub fn onclick( &mut self , val:&str ) -> &mut Self
+		self.0.att( "onclick"` , val` )
+		---> self
+	pub fn onload( &mut self , val:&str ) -> &mut Self
+		self.0.att( "onload"` , val` )
+		---> self
+	pub fn data( &mut self , key:&str , val:&str ) -> &mut Self
+		self.0.att( !!( "data-{}",key )` , val` )
+		---> self
+	pub fn contenteditable( &mut self ) -> &mut Self
+		self.0.att( "contenteditable"` , "true"` )
+		---> self
+	pub fn tabindex( &mut self ,n:i32 ) -> &mut Self
+		self.0.att( "tabindex"` , !!("{}" ,n) )
+		---> self
+	pub fn autocorrect( &mut self ,b:bool) -> &mut Self
+		if b
+			self.0.att( "autocorrect"` , "on"` )
+		else
+			self.0.att( "autocorrect"` , "off"` )
+		---> self
+	pub fn autocapitalize( &mut self ,b:bool) -> &mut Self
+		if b
+			self.0.att( "autocapitalize"` , "on"` )
+		else
+			self.0.att( "autocapitalize"` , "off"` )
+		---> self
+	pub fn spellcheck( &mut self ,b:bool) -> &mut Self
+		if b
+			self.0.att( "spellcheck"` , "true"` )
+		else
+			self.0.att( "spellcheck"` , "false"` )
+		---> self
+	pub fn noAutos( &mut self ) -> &mut Self
+		self   .autocorrect(false)   .autocapitalize(false)   .spellcheck(false)
+		---> self
+	pub fn n( &mut self ) -> String
+		let mut x = !!( "\n<{} " , self.0.name )
+		for att in &self.0.atts
+			if att.1 == ""
+				x += &!!( "{} " , &att.0 )
+			else
+				x += &!!( "{}='{}' " , &att.0 , &att.1 )
+		let val = !!( "\n{}\n" , &self.0.val )
+		let val = unlines( val.lines().map( tab ).collect() )
+		x += &!!( ">{}</{}>" , &val , &self.0.name )
+		---> !!( "{}" , x )
+
+impl Li
+	pub fn value( &mut self ,n:u32) -> &mut Self
+		self.0.att( "value"` , !!("{}" ,n))
+		---> self
+
+impl Label
+	pub fn for_( &mut self ,x:&str) -> &mut Self
+		self.0.att( "for"` , !!("{}" ,x))
+		---> self
+//Only for <ol> lists.Specifies the start value of a list item.The following list items will increment from that number
+
+impl Pre
+	pub fn oninput( &mut self ,f:&str) -> &mut Self
+		self.0.att( "oninput"` , !!("{}" ,f))
+		---> self
+	pub fn onchange( &mut self ,f:&str) -> &mut Self
+		self.0.att( "onchange"` , !!("{}" ,f))
+		---> self
+	pub fn wrap( &mut self ) -> &mut Self
+		self.0.att( "wrap"` , ""`)
+		---> self
+
+impl Ol
+	pub fn reversed( &mut self ) -> &mut Self
+		self.0.att( "reversed"` , ""` )
+		---> self
+	pub fn start( &mut self ,n:u32) -> &mut Self
+		// Specifies the start value of an ordered list
+		self.0.att( "start"` , !!("{}" ,n) )
+		---> self
+	pub fn type_( &mut self ,t:ListType) -> &mut Self
+		match t
+			ListType::N =>
+				self.0.att( "type"` ,"1"` )
+				---> self
+			ListType::A =>
+				self.0.att( "type"` ,"A"` )
+				---> self
+			ListType::Aa =>
+				self.0.att( "type"` ,"a"` )
+				---> self
+			ListType::I =>
+				self.0.att( "type"` ,"I"` )
+				---> self
+			ListType::Ii =>
+				self.0.att( "type"` ,"i"` )
+				---> self
+
+impl A
+	pub fn download( &mut self ) -> &mut Self
+		self.0.att( "download"` , ""` )
+		---> self
+	pub fn href( &mut self , url:&str ) -> &mut Self
+		self.0.att( "href"` , url` )
+		---> self
+	pub fn type_( &mut self , x:&str ) -> &mut Self
+		self.0.att( "type"` , x` )
+		---> self
+	pub fn hreflang( &mut self , two_digit_code:&str ) -> &mut Self
+		self.0.att( "hreflang"` , two_digit_code` )
+		---> self
+	pub fn ping( &mut self , urls:&str ) -> &mut Self
+		// space separated urls
+		self.0.att( "hreflang"` , urls` )
+		---> self
+	pub fn target( &mut self , x:Target ) -> &mut Self
+		match x
+			Target::Blank =>
+				self.0.att( "target"` , "blank"` )
+				---> self
+			Target::Parent =>
+				self.0.att( "target"` , "parent"` )
+				---> self
+			Target::Self_ =>
+				self.0.att( "target"` , "self"` )
+				---> self
+			Target::Top =>
+				self.0.att( "target"` , "top"` )
+				---> self
+	pub fn rel( &mut self , x:ARel ) -> &mut Self
+		match x
+			ARel::Alternate =>
+				self.0.att( "rel"` , "alternate"` )
+				---> self
+			ARel::Author =>
+				self.0.att( "rel"` , "author"` )
+				---> self
+			ARel::Bookmark =>
+				self.0.att( "rel"` , "bookmark"` )
+				---> self
+			ARel::External =>
+				self.0.att( "rel"` , "external"` )
+				---> self
+			ARel::Help =>
+				self.0.att( "rel"` , "help"` )
+				---> self
+			ARel::License =>
+				self.0.att( "rel"` , "license"` )
+				---> self
+			ARel::Next =>
+				self.0.att( "rel"` , "next"` )
+				---> self
+			ARel::Nofollow =>
+				self.0.att( "rel"` , "nofollow"` )
+				---> self
+			ARel::Noreferrer =>
+				self.0.att( "rel"` , "noreferrer"` )
+				---> self
+			ARel::Noopener =>
+				self.0.att( "rel"` , "noopener"` )
+				---> self
+			ARel::Prev =>
+				self.0.att( "rel"` , "prev"` )
+				---> self
+			ARel::Search =>
+				self.0.att( "rel"` , "search"` )
+				---> self
+			ARel::Tag =>
+				self.0.att( "rel"` , "tag"` )
+				---> self
+	pub fn novalidate( &mut self ) -> &mut Self
+		self.0.att( "novalidate"` , ""` )
+		---> self
+	pub fn name( &mut self , x:&str ) -> &mut Self
+		self.0.att( "name"` , x` )
+		---> self
+	pub fn action( &mut self , url:&str ) -> &mut Self
+		self.0.att( "action"` , url` )
+		---> self
+	pub fn method( &mut self , x:Method ) -> &mut Self
+		match x
+			Method::Get =>
+				self.0.att( "method"` , "get"` )
+				---> self
+			Method::Post =>
+				self.0.att( "method"` , "post"` )
+				---> self
+	pub fn enctype( &mut self , x:Enctype ) -> &mut Self
+		match x
+			Enctype::Application =>
+				self.0.att( "enctype"` , "application/x-www-form-urlencoded"` )
+				---> self
+			Enctype::Multipart =>
+				self.0.att( "enctype"` , "multipart/form-data"` )
+				---> self
+			Enctype::Text =>
+				self.0.att( "enctype"` , "text/plain"` )
+				---> self
+	pub fn autocomplete( &mut self , on:bool ) -> &mut Self
+		if on
+			self.0.att( "autocomplete"` , "on"` )
+		else
+			self.0.att( "autocomplete"` , "off"` )
+		---> self
+
+impl Form
+	pub fn target( &mut self , x:Target ) -> &mut Self
+		match x
+			Target::Blank =>
+				self.0.att( "rel"` , "_blank"` )
+				---> self
+			Target::Self_ =>
+				self.0.att( "rel"` , "_self"` )
+				---> self
+			Target::Parent =>
+				self.0.att( "rel"` , "_parent"` )
+				---> self
+			Target::Top =>
+				self.0.att( "rel"` , "_top"` )
+				---> self
+	pub fn rel( &mut self , x:FormRel ) -> &mut Self
+		match x
+			FormRel::External =>
+				self.0.att( "rel"` , "external"` )
+				---> self
+			FormRel::Help =>
+				self.0.att( "rel"` , "help"` )
+				---> self
+			FormRel::License =>
+				self.0.att( "rel"` , "license"` )
+				---> self
+			FormRel::Next =>
+				self.0.att( "rel"` , "next"` )
+				---> self
+			FormRel::Nofollow =>
+				self.0.att( "rel"` , "nofollow"` )
+				---> self
+			FormRel::Noopener =>
+				self.0.att( "rel"` , "noopener"` )
+				---> self
+			FormRel::Noreferrer =>
+				self.0.att( "rel"` , "noreferrer"` )
+				---> self
+			FormRel::Opener =>
+				self.0.att( "rel"` , "opener"` )
+				---> self
+			FormRel::Prev =>
+				self.0.att( "rel"` , "prev"` )
+				---> self
+			FormRel::Search =>
+				self.0.att( "rel"` , "search"` )
+				---> self
+	pub fn novalidate( &mut self ) -> &mut Self
+		self.0.att( "novalidate"` , ""` )
+		---> self
+	pub fn name( &mut self , x:&str ) -> &mut Self
+		self.0.att( "name"` , x` )
+		---> self
+	pub fn onsubmit( &mut self ,f:&str ) -> &mut Self
+		self.0.att( "onsubmit"` , f` )
+		---> self
+	pub fn action( &mut self , url:&str ) -> &mut Self
+		self.0.att( "action"` , url` )
+		---> self
+	pub fn method( &mut self , x:Method ) -> &mut Self
+		match x
+			Method::Get =>
+				self.0.att( "method"` , "get"` )
+				---> self
+			Method::Post =>
+				self.0.att( "method"` , "post"` )
+				---> self
+	pub fn enctype( &mut self , x:Enctype ) -> &mut Self
+		match x
+			Enctype::Application =>
+				self.0.att( "enctype"` , "application/x-www-form-urlencoded"` )
+				---> self
+			Enctype::Multipart =>
+				self.0.att( "enctype"` , "multipart/form-data"` )
+				---> self
+			Enctype::Text =>
+				self.0.att( "enctype"` , "text/plain"` )
+				---> self
+	pub fn autocomplete( &mut self , on:bool ) -> &mut Self
+		if on
+			self.0.att( "autocomplete"` , "on"` )
+		else
+			self.0.att( "autocomplete"` , "off"` )
+		---> self
+
+impl Img
+	pub fn src( &mut self , val:&str ) -> &mut Self
+		self.0.att( "src"` , val` )
+		---> self
+
+impl Source
+	pub fn src( &mut self , val:&str ) -> &mut Self
+		self.0.att( "src"` , val` )
+		---> self
+
+impl Video
+	pub fn preload( &mut self , x:Preload ) -> &mut Self
+		match x
+			Preload::Auto =>
+				self.0.att( "preload"` , "auto"` )
+				---> self
+			Preload::Metadata =>
+				self.0.att( "preload"` , "metadata"` )
+				---> self
+			Preload::None =>
+				self.0.att( "preload"` , "none"` )
+				---> self
+	pub fn autoplay( &mut self ) -> &mut Self
+		self.0.att( "autoplay"` , ""` )
+		---> self
+	pub fn controls( &mut self ) -> &mut Self
+		self.0.att( "controls"` , ""` )
+		---> self
+	pub fn loop_( &mut self ) -> &mut Self
+		self.0.att( "loop"` , ""` )
+		---> self
+	pub fn muted( &mut self ) -> &mut Self
+		self.0.att( "muted"` , ""` )
+		---> self
+	pub fn poster( &mut self ,url:&str ) -> &mut Self
+		self.0.att( "poster"` , url` )
+		---> self
+	pub fn src( &mut self ,url:&str ) -> &mut Self
+		self.0.att( "src"` , url` )
+		---> self
+	pub fn width( &mut self , x:i32 ) -> &mut Self
+		self.0.att( "width"` , x` )
+		---> self
+	pub fn height( &mut self , x:i32 ) -> &mut Self
+		self.0.att( "height"` , x` )
+		---> self
+
+impl Select
+	pub fn autofocus( &mut self ) -> &mut Self
+		self.0.att( "autofocus"` , ""` )
+		---> self
+	pub fn disabled( &mut self ) -> &mut Self
+		self.0.att( "disabled"` , ""` )
+		---> self
+	pub fn required( &mut self ) -> &mut Self
+		self.0.att( "required"` , ""` )
+		---> self
+	pub fn name( &mut self , x:&str ) -> &mut Self
+		self.0.att( "name"` , x` )
+		---> self
+	pub fn size( &mut self , x:i32 ) -> &mut Self
+		self.0.att( "size"` , !!( "{}",x ) )
+		---> self
+	pub fn onchange( &mut self ,f:&str ) -> &mut Self
+		self.0.att( "onchange"` , f` )
+		---> self
+
+impl Option
+	pub fn disabled( &mut self ) -> &mut Self
+		self.0.att( "disabled"` , ""` )
+		---> self
+	pub fn selected( &mut self ) -> &mut Self
+		self.0.att( "selected"` , ""` )
+		---> self
+	pub fn value( &mut self , x:&str ) -> &mut Self
+		self.0.att( "value"` , x` )
+		---> self
+
+impl Button
+	pub fn autofocus( &mut self ) -> &mut Self
+		self.0.att( "autofocus"` , ""` )
+		---> self
+	pub fn disabled( &mut self ) -> &mut Self
+		self.0.att( "disabled"` , ""` )
+		---> self
+	pub fn name( &mut self , x:&str ) -> &mut Self
+		self.0.att( "name"` , x` )
+		---> self
+	pub fn value( &mut self , x:&str ) -> &mut Self
+		self.0.att( "value"` , x` )
+		---> self
+
+impl Input
+	pub fn multiple(&mut self) -> &mut Self
+		self.0.att( "multiple"` ,""` )
+		---> self
+	pub fn minlenght( &mut self , val:i32 ) -> &mut Self
+		self.0.att( "minlenght"` , !!("{}" , val` ) )
+		---> self
+	pub fn value( &mut self , val:&str ) -> &mut Self
+		self.0.att( "value"` , !!("{}" , val` ) )
+		---> self
+	pub fn size( &mut self , val:i32 ) -> &mut Self
+		self.0.att( "size"` , !!("{}" , val` ) )
+		---> self
+	pub fn max( &mut self , val:&str ) -> &mut Self
+		self.0.att( "max"` , val` )
+		---> self
+	pub fn list( &mut self , id:&str ) -> &mut Self
+		// id of the datalist tag (input autocompletion)
+		self.0.att( "list"` , id` )
+		---> self
+	pub fn name( &mut self , val:&str ) -> &mut Self
+		self.0.att( "name"` , val` )
+		---> self
+	pub fn placeholder( &mut self , val:&str ) -> &mut Self
+		self.0.att( "placeholder"` , val` )
+		---> self
+	pub fn readonly( &mut self ) -> &mut Self
+		self.0.att( "readonly"` , ""` )
+		---> self
+	pub fn min( &mut self , val:&str ) -> &mut Self
+		self.0.att( "min"` , val` )
+		---> self
+	pub fn checked( &mut self ) -> &mut Self
+		self.0.att( "checked"` , ""` )
+		---> self
+	pub fn autofocus( &mut self ) -> &mut Self
+		self.0.att( "autofocus"` , ""` )
+		---> self
+	pub fn disabled( &mut self ) -> &mut Self
+		self.0.att( "disabled"` , ""` )
+		---> self
+	pub fn autocomplete( &mut self , val:bool ) -> &mut Self
+		if val
+			self.0.att( "autocomplete"` , "on"` )
+		else
+			self.0.att( "autocomplete"` , "off"` )
+		---> self
+	pub fn alt( &mut self , val:&str ) -> &mut Self
+		let mut b = false
+		for a in &self.0.atts
+			if a.0 == "type" && a.1 == "image"
+				b = true
+		self.0.att( "accept"` , val` )
+		if !b
+			panic!( "\n\nTHE 'alt' ATT IS ONLY VALID FOR ATT: type='image'\n\n" )
+		---> self
+	pub fn accept( &mut self , val:&str ) -> &mut Self
+		let mut b = false
+		for a in &self.0.atts
+			if a.0 == "type" && a.1 == "text" || a.0 == "type" && a.1 == "file"
+				b = true
+		self.0.att( "accept"` , val` )
+		if !b
+			panic!("\n\nTHE 'accept' ATT IS ONLY VALID FOR ATT: type='text||file'\n\n")
+		---> self
+	pub fn type_( &mut self , val:Type ) -> &mut Self
+		match val
+			Type::Button =>
+				self.0.att( "type"` , "button"` )
+				---> self
+			Type::Checkbox =>
+				self.0.att( "type"` , "checkbox"` )
+				---> self
+			Type::Color =>
+				self.0.att( "type"` , "color"` )
+				---> self
+			Type::Date =>
+				self.0.att( "type"` , "date"` )
+				---> self
+			Type::DatetimeLocal =>
+				self.0.att( "type"` , "datetimeLocal"` )
+				---> self
+			Type::Email =>
+				self.0.att( "type"` , "email"` )
+				---> self
+			Type::File =>
+				self.0.att( "type"` , "file"` )
+				---> self
+			Type::Hidden =>
+				self.0.att( "type"` , "hidden"` )
+				---> self
+			Type::Image =>
+				self.0.att( "type"` , "image"` )
+				---> self
+			Type::Month =>
+				self.0.att( "type"` , "month"` )
+				---> self
+			Type::Number =>
+				self.0.att( "type"` , "number"` )
+				---> self
+			Type::Password =>
+				self.0.att( "type"` , "password"` )
+				---> self
+			Type::Radio =>
+				self.0.att( "type"` , "radio"` )
+				---> self
+			Type::Range =>
+				self.0.att( "type"` , "range"` )
+				---> self
+			Type::Reset =>
+				self.0.att( "type"` , "reset"` )
+				---> self
+			Type::Search =>
+				self.0.att( "type"` , "search"` )
+				---> self
+			Type::Submit =>
+				self.0.att( "type"` , "submit"` )
+				---> self
+			Type::Tel =>
+				self.0.att( "type"` , "tel"` )
+				---> self
+			Type::Text =>
+				self.0.att( "type"` , "text"` )
+				---> self
+			Type::Time =>
+				self.0.att( "type"` , "time"` )
+				---> self
+			Type::Url =>
+				self.0.att( "type"` , "url"` )
+				---> self
+			Type::Week =>
+				self.0.att( "type"` , "week"` )
+				---> self
+	pub fn onchange( &mut self ,f:&str ) -> &mut Self
+		self.0.att( "onchange"` , f` )
+		---> self
+	pub fn oninput( &mut self ,f:&str ) -> &mut Self
+		self.0.att( "onchange"` , f` )
+		---> self
+
+impl Textarea
+	pub fn autofocus( &mut self ) -> &mut Self
+		self.0.att( "autofocus"` , ""` )
+		---> self
+	pub fn disabled( &mut self ) -> &mut Self
+		self.0.att( "disabled"` , ""` )
+		---> self
+	pub fn readonly( &mut self ) -> &mut Self
+		self.0.att( "readonly"` , ""` )
+		---> self
+	pub fn required( &mut self ) -> &mut Self
+		self.0.att( "required"` , ""` )
+		---> self
+	pub fn cols( &mut self , x:i32 ) -> &mut Self
+		self.0.att( "cols"` , !!( "{}",x )` )
+		---> self
+	pub fn rows( &mut self , x:i32 ) -> &mut Self
+		self.0.att( "rows"` , !!( "{}",x )` )
+		---> self
+	pub fn maxlength( &mut self , x:i32 ) -> &mut Self
+		self.0.att( "maxlength"` , !!( "{}",x )` )
+		---> self
+	pub fn name( &mut self , x:&str ) -> &mut Self
+		self.0.att( "name"` , x` )
+		---> self
+	pub fn placeholder( &mut self , x:&str ) -> &mut Self
+		self.0.att( "placeholder"` , x` )
+		---> self
+	pub fn onchange( &mut self ,f:&str ) -> &mut Self
+		self.0.att( "onchange"` , f` )
+		---> self
+	pub fn oninput( &mut self , f:&str ) -> &mut Self
+		self.0.att( "oninput"` , f` )
+		---> self
+
+//HELPERS
+fn tab( x:&str ) -> String
+	//let mut y = "\t"`
+	let mut y = ""`
+	y.push_str( x )
+	---> y
+fn unlines( ls:Vec<String> ) -> String
+	let mut x = ""`
+	for l in ls
+		x.push_str( &l )
+		x.push_str( "\n" )
+	---> x[..x.len()-1]`
+
+//READY CONTRUCTS
+
+// PAGED
+pub fn paged( pages:Vec<String> ) -> String
+	let mut pagernav = input( "" ) .class( "term" ) .n()
+	pagernav += &form( &pagernav ).class( "hidden" ).n()
+	let pager = div( "" ).class( "pager" ).n()
+	pagernav += &pager
+	pagernav += &div( &pagernav ).class( "nav" ).n()
+	for page in pages
+		pagernav += &div( &page ).class( "page" ).n()
+	let paged = div( &pagernav ).class( "paged" ).id( "PAGED" ).n()
+	---> paged
+
+// CALENDAR
+// needed by js function: calendar
+pub fn calendar(id:&str) -> String
+	let mut y = ""`
+	let mut x = ""`
+	x += &div("&lt;") .class("CALENDAR_PREV") .n()
+	y += &x
+	x = span("month") .class("CALENDAR_MONTH") .n()
+	x += &span("@") .class("CALENDAR_YEAR") .n()
+	x = div(&x) .n()
+	y += &x
+	y += &div("&gt;") .class("CALENDAR_NEXT") .n()
+	y = div(&y) .class("calendar_header") .n()
+	//
+	x = div("Δε") .class("calendar_day_header") .n()
+	x += &div("Τρ") .class("calendar_day_header") .n()
+	x += &div("Τε") .class("calendar_day_header") .n()
+	x += &div("Πε") .class("calendar_day_header") .n()
+	x += &div("Πα") .class("calendar_day_header") .n()
+	x += &div("Σα") .class("calendar_day_header") .n()
+	x += &div("Κυ") .class("calendar_day_header") .n()
+	x += &div("00") .class("calendar_day") .data("date","") .n()
+	x += &div("00") .class("calendar_day") .data("date","") .n()
+	x += &div("00") .class("calendar_day") .data("date","") .n()
+	x += &div("00") .class("calendar_day") .data("date","") .n()
+	x += &div("00") .class("calendar_day") .data("date","") .n()
+	x += &div("00") .class("calendar_day") .data("date","") .n()
+	x += &div("00") .class("calendar_day") .data("date","") .n()
+	x += &div("00") .class("calendar_day") .data("date","") .n()
+	x += &div("00") .class("calendar_day") .data("date","") .n()
+	x += &div("00") .class("calendar_day") .data("date","") .n()
+	x += &div("00") .class("calendar_day") .data("date","") .n()
+	x += &div("00") .class("calendar_day") .data("date","") .n()
+	x += &div("00") .class("calendar_day") .data("date","") .n()
+	x += &div("00") .class("calendar_day") .data("date","") .n()
+	x += &div("00") .class("calendar_day") .data("date","") .n()
+	x += &div("00") .class("calendar_day") .data("date","") .n()
+	x += &div("00") .class("calendar_day") .data("date","") .n()
+	x += &div("00") .class("calendar_day") .data("date","") .n()
+	x += &div("00") .class("calendar_day") .data("date","") .n()
+	x += &div("00") .class("calendar_day") .data("date","") .n()
+	x += &div("00") .class("calendar_day") .data("date","") .n()
+	x += &div("00") .class("calendar_day") .data("date","") .n()
+	x += &div("00") .class("calendar_day") .data("date","") .n()
+	x += &div("00") .class("calendar_day") .data("date","") .n()
+	x += &div("00") .class("calendar_day") .data("date","") .n()
+	x += &div("00") .class("calendar_day") .data("date","") .n()
+	x += &div("00") .class("calendar_day") .data("date","") .n()
+	x += &div("00") .class("calendar_day") .data("date","") .n()
+	x += &div("00") .class("calendar_day") .data("date","") .n()
+	x += &div("00") .class("calendar_day") .data("date","") .n()
+	x += &div("00") .class("calendar_day") .data("date","") .n()
+	x += &div("00") .class("calendar_day") .data("date","") .n()
+	x += &div("00") .class("calendar_day") .data("date","") .n()
+	x += &div("00") .class("calendar_day") .data("date","") .n()
+	x += &div("00") .class("calendar_day") .data("date","") .n()
+	x += &div("00") .class("calendar_day") .data("date","") .n()
+	x += &div("00") .class("calendar_day") .data("date","") .n()
+	x += &div("00") .class("calendar_day") .data("date","") .n()
+	x += &div("00") .class("calendar_day") .data("date","") .n()
+	x += &div("00") .class("calendar_day") .data("date","") .n()
+	x += &div("00") .class("calendar_day") .data("date","") .n()
+	x += &div("00") .class("calendar_day") .data("date","") .n()
+	x = div(&x) .class("calendar_grid") .n()
+	y += &x
+	x = div("") .class("CALENDAR_PRINT_TODAY") .n()
+	x += &div("") .class("CALENDAR_PRINT_SELECTED") .n()
+	x = div(&x) .class("CALENDAR_PRINT") .n()
+	y += &x
+	y = div(&y) .id(id) .data("date" ,"") .data("selected" ,"") .n()
+	---> y
+
+//REFERENCE
+//https://www.w3schools.com/TAGS/default.ASP
+
