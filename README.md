@@ -6,7 +6,7 @@ this is an html dsl library for rust, not an html template. not complete but eas
 ## rational
 the case for an html dsl instead of an html template is best described in this [here](href="https://codeburst.io/80-of-my-coding-is-doing-this-or-why-templates-are-dead-b640fc149e22)
 
-## examle usage:
+## example usage:
 
 ```
 use	html::*
