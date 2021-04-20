@@ -4,7 +4,7 @@
 this is an html dsl library for rust, not an html template. not complete but easily extensible.
 
 ## rational
-the case for an html dsl instead of an html template is best described in this [here](href="https://codeburst.io/80-of-my-coding-is-doing-this-or-why-templates-are-dead-b640fc149e22)
+the case for an html dsl instead of an html template is best described in this [here](https://codeburst.io/80-of-my-coding-is-doing-this-or-why-templates-are-dead-b640fc149e22)
 
 ## example usage:
 
