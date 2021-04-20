@@ -6,26 +6,30 @@ use std::time::  {
 	UNIX_EPOCH, }
 ; 
 //ENUMS  ;
-pub enum TextareaWrap  {
+pub enum TEXTAREAWRAP  {
 	Hard, Soft, }
-pub enum Type  {
+pub enum TYPE  {
 	Button, Checkbox, Color , Date, DatetimeLocal, Email, File, Hidden, Image, Month, Number,  Password, Radio, Range, Reset, Search, Submit, Tel, Text, Time, Url, Week, }
-pub enum Preload  {
+pub enum PRELOAD  {
 	Auto, Metadata, None, }
-pub enum Enctype  {
+pub enum ENCTYPE  {
 	Application, Multipart, Text, }
-pub enum Method  {
-	Get, Post, }
-pub enum Target  {
+pub enum METHOD  {
+	Get, Post, Patch, }
+pub enum TARGET  {
 	Blank, Self_, Parent, Top, }
-pub enum FormRel  {
+pub enum FORMREL  {
 	External, Help, License, Next, Nofollow, Noopener, Noreferrer, Opener, Prev, Search, }
-pub enum ARel  {
+pub enum AREL  {
 	Alternate ,Author ,Bookmark ,External ,Help ,License ,Next ,Nofollow ,Noreferrer ,Noopener  ,Prev ,Search ,Tag , }
-pub enum Refpolicy  {
+pub enum REFPOLICY  {
 	NoReferrer ,NoReferrerWhenDowngrade ,Origin ,OriginWhenCrossOrigin ,UnsafeUrl , }
-pub enum ListType  {
+pub enum LISTTYPE  {
 	N ,A ,Aa ,I ,Ii , }
+pub enum MARQUEEBEHAVIOR  {
+	Scroll, Slide, Alternate, }
+pub enum MARQUEEDIRECTION  {
+	Left, Right, Up, Down, }
 struct Tag  {
 	pub name: String , 
 	pub atts: Vec<(String,String)> , 
@@ -40,71 +44,100 @@ impl Tag  {
 		self.atts.push( ( name , val ) )  ;
 		return self  ;}}
 pub struct Html  {
+	pub version: VERSION, 
 	pub title: String, 
 	pub desc: String, 
-	pub kws: Vec<String>, 
+	pub keywords: Vec<String>, 
 	pub content: String, 
 	pub theme: String, 
 	pub scale: u32, 
 	pub css: Vec<String>, 
-	pub js: Vec<(JAVASCRIPT,String)>, 
-	pub favicon: String, }
+	pub js: Vec<JAVASCRIPT>, 
+	pub favicon: String, 
+	pub ogimage: (String,String), }
 pub enum JAVASCRIPT  {
-	Module ,Script , }
+	Module(String), 
+	Script(String), }
+#[derive(Debug ,Clone)] pub enum VERSION  {
+	Auto ,Number(String) , }
 impl Html  {
-	pub fn version( &mut self ) -> &mut Html  {
-		let t = SystemTime::now().duration_since( UNIX_EPOCH )   .expect( "ERR: Time is before Unix Epoch" ).as_millis()  ;
-		let ver = format!( "?v={}" , t )  ;
+	pub fn new(x:&str) ->Html  {
+		return Html  {
+			version: VERSION::Number("0".to_string()), 
+			title: "".to_string(), 
+			desc: "".to_string(), 
+			keywords: vec!(), 
+			content: x.to_string(), 
+			theme: "#111111".to_string(), 
+			scale: 3, 
+			css: vec!(), 
+			js: vec!(), 
+			favicon: "".to_string(), 
+			ogimage: ("".to_string(),"".to_string()), }}
+	fn versioning( &mut self ) -> &mut Html  {
+		//[1]  ;
+		let ver:String  ;
+		match &self.version  {
+			VERSION::Auto =>  {
+				let t = SystemTime::now().duration_since( UNIX_EPOCH )    .expect( "ERR: Time is before Unix Epoch" ).as_millis()  ;
+				ver = format!( "?v={}" ,t)  ;}
+			VERSION::Number(n) =>  {
+				ver = format!( "?v={}" ,n)  ;}}
 		for link in &mut self.css  {
 			link.push_str( &ver )  ;}
 		for script in &mut self.js  {
-			script .1 .push_str( &ver )  ;}
+			match script  {
+				JAVASCRIPT::Module(s) =>  {
+					JAVASCRIPT::Module(format!("{}{}" ,s ,&ver))  ;}
+				JAVASCRIPT::Script(s) =>  {
+					JAVASCRIPT::Script(format!("{}{}" ,s ,&ver))  ;}}}
 		self.favicon.push_str( &ver )  ;
 		return self  ;}
 	pub fn print( &mut self ) -> String  {
-		if self.desc.len() > 120  {
-			panic!( format!( "\n\n\tHtml.desc IS {} CHARS BUT MUST BE UP TO 120\n\n"    , self.desc.len() ) )  ;}
-		if self.title.len() > 60  {
-			panic!( format!( "\n\n\tHtml.title IS {} CHARS BUT MUST BE UP TO 60\n\n"    , self.title.len() ) )  ;}
-		if self.kws.len() > 10  {
-			panic!( format!( "\n\n\tHtml.kws HAS {} KEYWORDS, BUT MUST BE UP TO 10\n\n"    , self.title.len() ) )  ;}
-		let html = self.version()  ;
+		let html = self.versioning()  ;
 		let mut x = format!( "<title>{}</title>\n" , html.title )  ;
 		x.push_str( "<meta http-equiv='Content-Type' content='text/html; charset=utf-8'>\n" )  ;
 		x.push_str( &format!( "<meta name='description' content='{}'>\n" , html.desc ) )  ;
-		if html.kws.len() > 0  {
+		if html.ogimage.0 != "".to_string()  {
+			x.push_str( &format!( "<meta property='og:image' content='{}'>\n" , html.ogimage.0 ) )  ;
+			x.push_str( &format!( "<meta property='og:image:alt' content='{}'>\n" , html.ogimage.1 ) )  ;}
+		if html.keywords.len() > 0  {
 			let mut kws = "".to_string()  ;
-			for k in &html.kws  {
+			for k in &html.keywords  {
 				kws += &format!( "{}, " , k )  ;}
 			let kws = kws[..kws.len()-2].to_string()  ;
 			x.push_str( &format!( "<meta name='keywords' content='{}'>\n" , kws ) )  ;}
-		x.push_str( &format!( "<meta name='viewport' content='width=device-width, initial-scale=1,    maximum-scale={}'>\n" , html.scale ) )  ;
+		x.push_str( &format!( "<meta name='viewport' content='width=device-width, initial-scale=1,   maximum-scale={}'>\n" , html.scale ) )  ;
 		x.push_str( &format!( "<meta name='theme-color' content='{}'>\n" , html.theme ) )  ;
 		for i in &html.css  {
 			x.push_str( &format!( "<link rel='stylesheet' href='{}' />\n" , i ) )  ;}
 		x.push_str( &format!( "<link rel='shortcut icon' href='{}' />\n" , &html.favicon ) )  ;
 		x = format!( "<!DOCTYPE html>\n<html>\n{}\n<body>\n{}\n</body>\n" , x , html.content )  ;
 		for i in &html.js  {
-			match i .0  {
-				JAVASCRIPT::Script =>  {
-					x.push_str(&format!("<script src='{}'></script>\n" ,i .1))  ;}
-				JAVASCRIPT::Module =>  {
-					x.push_str(&format!("<script type='module'       src='{}'></script>\n" ,i .1))  ;}}}
+			match i  {
+				JAVASCRIPT::Script(s) =>  {
+					x.push_str(&format!("<script src='{}'></script>\n" ,s))  ;}
+				JAVASCRIPT::Module(s) =>  {
+					x.push_str(&format!("<script type='module'      src='{}'></script>\n" ,s))  ;}}}
 		x.push_str( "</html>" )  ;
 		return x  ;}
 	pub fn write( &mut self , file:&str )  {
 		let p = std::path::Path::new( file )  ;
-		let mut f = std::fs::File::create( &p )   .expect( format!( "ERR: COULD NOT CREATE FILE {}" , file ).as_str() )  ;
+		let mut f = std::fs::File::create( &p )  .expect( format!( "ERR: COULD NOT CREATE FILE {}" , file ).as_str() )  ;
 		let h = self.print()  ;
-		f.write_all( h.as_bytes())   .expect( format!("ERR: COULD NOT WRITE TO {}",p.display()).as_str() )  ;}}
+		f.write_all( h.as_bytes())  .expect( format!("ERR: COULD NOT WRITE TO {}",p.display()).as_str() )  ;}}
+//[1]If version is Auto,the css/js version will be generated on every reload.I want this when developing.  ;
 //T  ;
-#[duplicate(T; [B]; [Label]; [Datalist]; [Code]; [Article]; [Aside]; [Section]; [P]; [Ol]; [Ul]; [Li]; [Option]; [Pre]; [Canvas]; [Blockquote]; [Source]; [Span]; [A]; [Form]; [Template]; [Video]; [Textarea]; [Select]; [H1]; [H2]; [H3]; [H4]; [H5]; [H6]; [Button]; [Div]; [Img]; [Input] )] 
+#[duplicate(T; [MARQUEE]; [Q]; [MAINN]; [NAV]; [FOOTER]; [HEADER]; [B]; [LABEL]; [DATALIST]; [CODE]; [ARTICLE]; [ASIDE]; [SECTION]; [P]; [OL]; [UL]; [LI]; [OPTION]; [PRE]; [CANVAS]; [BLOCKQUOTE]; [SOURCE]; [SPAN]; [A]; [FORM]; [TEMPLATE]; [VIDEO]; [TEXTAREA]; [SELECT]; [H1]; [H2]; [H3]; [H4]; [H5]; [H6]; [BUTTON]; [DIV]; [IMG]; [INPUT] )] 
 pub struct T( Tag ) ; 
-#[duplicate(f name T ; [b]["b"][B]; [label]["label"][Label]; [datalist]["datalist"][Datalist]; [code]["code"][Code]; [article]["article"][Article]; [aside]["aside"][Aside]; [section]["section"][Section]; [p]["p"][P]; [ol]["ol"][Ol]; [ul]["ul"][Ul]; [li]["li"][Li]; [option]["option"][Option]; [pre]["pre"][Pre]; [canvas]["canvas"][Canvas]; [blockquote]["blockquote"][Blockquote]; [source]["source"][Source]; [span]["span"][Span]; [a]["a"][A]; [form]["form"][Form]; [template]["template"][Template]; [video]["video"][Video]; [textarea]["textarea"][Textarea]; [select]["select"][Select]; [h1]["h1"][H1]; [h2]["h2"][H2]; [h3]["h3"][H3]; [h4]["h4"][H4]; [h5]["h5"][H5]; [h6]["h6"][H6]; [button]["button"][Button]; [div]["div"][Div]; [img]["img"][Img]; [input]["input"][Input] )] 
-pub    fn     f( val:&str ) -> T  {
+#[duplicate(f name T ; [marquee]["marquee"][MARQUEE]; [q]["q"][Q]; [nav]["nav"][NAV]; [footer]["footer"][FOOTER]; [header]["header"][HEADER]; [b]["b"][B]; [label]["label"][LABEL]; [datalist]["datalist"][DATALIST]; [code]["code"][CODE]; [article]["article"][ARTICLE]; [aside]["aside"][ASIDE]; [section]["section"][SECTION]; [p]["p"][P]; [ol]["ol"][OL]; [ul]["ul"][UL]; [li]["li"][LI]; [option]["option"][OPTION]; [pre]["pre"][PRE]; [canvas]["canvas"][CANVAS]; [blockquote]["blockquote"][BLOCKQUOTE]; [source]["source"][SOURCE]; [span]["span"][SPAN]; [a]["a"][A]; [form]["form"][FORM]; [template]["template"][TEMPLATE]; [video]["video"][VIDEO]; [textarea]["textarea"][TEXTAREA]; [select]["select"][SELECT]; [h1]["h1"][H1]; [h2]["h2"][H2]; [h3]["h3"][H3]; [h4]["h4"][H4]; [h5]["h5"][H5]; [h6]["h6"][H6]; [button]["button"][BUTTON]; [div]["div"][DIV]; [img]["img"][IMG]; [input]["input"][INPUT] )] 
+pub fn f(val:&str) ->T  {
 	let t = Tag::new( name.to_string() , val.to_string() )  ;
 	return T( t )  ;}
-#[duplicate(T; [B]; [Label]; [Datalist]; [Code]; [Article]; [Aside]; [Section]; [P]; [Ol]; [Ul]; [Li]; [Option]; [Pre]; [Canvas]; [Blockquote]; [Source]; [Span]; [A]; [Form]; [Template]; [Video]; [Textarea]; [Select]; [H1]; [H2]; [H3]; [H4]; [H5]; [H6]; [Button]; [Div]; [Img]; [Input] )] 
+pub    fn mainn(val:&str) -> MAINN  {
+	let t = Tag::new("main".to_string() ,val.to_string())  ;
+	return MAINN(t)  ;}
+#[duplicate(T; [MARQUEE]; [Q]; [MAINN]; [NAV]; [FOOTER]; [HEADER]; [B]; [LABEL]; [DATALIST]; [CODE]; [ARTICLE]; [ASIDE]; [SECTION]; [P]; [OL]; [UL]; [LI]; [OPTION]; [PRE]; [CANVAS]; [BLOCKQUOTE]; [SOURCE]; [SPAN]; [A]; [FORM]; [TEMPLATE]; [VIDEO]; [TEXTAREA]; [SELECT]; [H1]; [H2]; [H3]; [H4]; [H5]; [H6]; [BUTTON]; [DIV]; [IMG]; [INPUT] )] 
 impl T  {
 	pub fn id( &mut self , val:&str ) -> &mut Self  {
 		self.0.att( "id".to_string() , val.to_string() )  ;
@@ -146,7 +179,7 @@ impl T  {
 			self.0.att( "spellcheck".to_string() , "false".to_string() )  ;}
 		return self  ;}
 	pub fn noAutos( &mut self ) -> &mut Self  {
-		self   .autocorrect(false)   .autocapitalize(false)   .spellcheck(false)  ;
+		self  .autocorrect(false)  .autocapitalize(false)  .spellcheck(false)  ;
 		return self  ;}
 	pub fn n( &mut self ) -> String  {
 		let mut x = format!( "\n<{} " , self.0.name )  ;
@@ -159,16 +192,58 @@ impl T  {
 		let val = unlines( val.lines().map( tab ).collect() )  ;
 		x += &format!( ">{}</{}>" , &val , &self.0.name )  ;
 		return format!( "{}" , x )  ;}}
-impl Li  {
+impl MARQUEE  {
+	pub fn behavior(&mut self ,x:MARQUEEBEHAVIOR) -> &mut Self  {
+		match x  {
+			MARQUEEBEHAVIOR::Scroll =>  {
+				self.0.att("bahavior".to_string() ,"scroll".to_string())  ;
+				return self  ;}
+			MARQUEEBEHAVIOR::Slide =>  {
+				self.0.att("bahavior".to_string() ,"slide".to_string())  ;
+				return self  ;}
+			MARQUEEBEHAVIOR::Alternate =>  {
+				self.0.att("bahavior".to_string() ,"alternate".to_string())  ;
+				return self  ;}}}
+	pub fn direction(&mut self ,x:MARQUEEDIRECTION) -> &mut Self  {
+		match x  {
+			MARQUEEDIRECTION::Left =>  {
+				self.0.att("direction".to_string() ,"left".to_string())  ;
+				return self  ;}
+			MARQUEEDIRECTION::Right =>  {
+				self.0.att("direction".to_string() ,"right".to_string())  ;
+				return self  ;}
+			MARQUEEDIRECTION::Up =>  {
+				self.0.att("direction".to_string() ,"up".to_string())  ;
+				return self  ;}
+			MARQUEEDIRECTION::Down =>  {
+				self.0.att("direction".to_string() ,"down".to_string())  ;
+				return self  ;}}}
+	pub fn loop_(&mut self ,x:u32) -> &mut Self  {
+		self.0.att("loop".to_string() ,format!("{}" ,&x))  ;
+		return self  ;}
+	pub fn scrollamount(&mut self ,x:u32) -> &mut Self  {
+		//  bigger = faster  ;
+		self.0.att("scrollamount".to_string() ,format!("{}" ,&x))  ;
+		return self  ;}
+	pub fn hspace(&mut self ,x:&str) -> &mut Self  {
+		//  bigger = faster  ;
+		self.0.att("hspace".to_string() ,x.to_string())  ;
+		return self  ;}}
+impl LI  {
 	pub fn value( &mut self ,n:u32) -> &mut Self  {
 		self.0.att( "value".to_string() , format!("{}" ,n))  ;
 		return self  ;}}
-impl Label  {
+impl BLOCKQUOTE  {
+	pub fn cite(&mut self ,x:&str) -> &mut Self  {
+		self.0.att( "cite".to_string() , format!("{}" ,x))  ;
+		return self  ;}}
+//cite accepts a url  ;
+impl LABEL  {
 	pub fn for_( &mut self ,x:&str) -> &mut Self  {
 		self.0.att( "for".to_string() , format!("{}" ,x))  ;
 		return self  ;}}
 //Only for <ol> lists.Specifies the start value of a list item.The following list items will increment from that number  ;
-impl Pre  {
+impl PRE  {
 	pub fn oninput( &mut self ,f:&str) -> &mut Self  {
 		self.0.att( "oninput".to_string() , format!("{}" ,f))  ;
 		return self  ;}
@@ -178,7 +253,7 @@ impl Pre  {
 	pub fn wrap( &mut self ) -> &mut Self  {
 		self.0.att( "wrap".to_string() , "".to_string())  ;
 		return self  ;}}
-impl Ol  {
+impl OL  {
 	pub fn reversed( &mut self ) -> &mut Self  {
 		self.0.att( "reversed".to_string() , "".to_string() )  ;
 		return self  ;}
@@ -186,21 +261,21 @@ impl Ol  {
 		// Specifies the start value of an ordered list  ;
 		self.0.att( "start".to_string() , format!("{}" ,n) )  ;
 		return self  ;}
-	pub fn type_( &mut self ,t:ListType) -> &mut Self  {
+	pub fn type_( &mut self ,t:LISTTYPE) -> &mut Self  {
 		match t  {
-			ListType::N =>  {
+			LISTTYPE::N =>  {
 				self.0.att( "type".to_string() ,"1".to_string() )  ;
 				return self  ;}
-			ListType::A =>  {
+			LISTTYPE::A =>  {
 				self.0.att( "type".to_string() ,"A".to_string() )  ;
 				return self  ;}
-			ListType::Aa =>  {
+			LISTTYPE::Aa =>  {
 				self.0.att( "type".to_string() ,"a".to_string() )  ;
 				return self  ;}
-			ListType::I =>  {
+			LISTTYPE::I =>  {
 				self.0.att( "type".to_string() ,"I".to_string() )  ;
 				return self  ;}
-			ListType::Ii =>  {
+			LISTTYPE::Ii =>  {
 				self.0.att( "type".to_string() ,"i".to_string() )  ;
 				return self  ;}}}}
 impl A  {
@@ -220,59 +295,59 @@ impl A  {
 		// space separated urls  ;
 		self.0.att( "hreflang".to_string() , urls.to_string() )  ;
 		return self  ;}
-	pub fn target( &mut self , x:Target ) -> &mut Self  {
+	pub fn target( &mut self , x:TARGET ) -> &mut Self  {
 		match x  {
-			Target::Blank =>  {
+			TARGET::Blank =>  {
 				self.0.att( "target".to_string() , "blank".to_string() )  ;
 				return self  ;}
-			Target::Parent =>  {
+			TARGET::Parent =>  {
 				self.0.att( "target".to_string() , "parent".to_string() )  ;
 				return self  ;}
-			Target::Self_ =>  {
+			TARGET::Self_ =>  {
 				self.0.att( "target".to_string() , "self".to_string() )  ;
 				return self  ;}
-			Target::Top =>  {
+			TARGET::Top =>  {
 				self.0.att( "target".to_string() , "top".to_string() )  ;
 				return self  ;}}}
-	pub fn rel( &mut self , x:ARel ) -> &mut Self  {
+	pub fn rel( &mut self , x:AREL ) -> &mut Self  {
 		match x  {
-			ARel::Alternate =>  {
+			AREL::Alternate =>  {
 				self.0.att( "rel".to_string() , "alternate".to_string() )  ;
 				return self  ;}
-			ARel::Author =>  {
+			AREL::Author =>  {
 				self.0.att( "rel".to_string() , "author".to_string() )  ;
 				return self  ;}
-			ARel::Bookmark =>  {
+			AREL::Bookmark =>  {
 				self.0.att( "rel".to_string() , "bookmark".to_string() )  ;
 				return self  ;}
-			ARel::External =>  {
+			AREL::External =>  {
 				self.0.att( "rel".to_string() , "external".to_string() )  ;
 				return self  ;}
-			ARel::Help =>  {
+			AREL::Help =>  {
 				self.0.att( "rel".to_string() , "help".to_string() )  ;
 				return self  ;}
-			ARel::License =>  {
+			AREL::License =>  {
 				self.0.att( "rel".to_string() , "license".to_string() )  ;
 				return self  ;}
-			ARel::Next =>  {
+			AREL::Next =>  {
 				self.0.att( "rel".to_string() , "next".to_string() )  ;
 				return self  ;}
-			ARel::Nofollow =>  {
+			AREL::Nofollow =>  {
 				self.0.att( "rel".to_string() , "nofollow".to_string() )  ;
 				return self  ;}
-			ARel::Noreferrer =>  {
+			AREL::Noreferrer =>  {
 				self.0.att( "rel".to_string() , "noreferrer".to_string() )  ;
 				return self  ;}
-			ARel::Noopener =>  {
+			AREL::Noopener =>  {
 				self.0.att( "rel".to_string() , "noopener".to_string() )  ;
 				return self  ;}
-			ARel::Prev =>  {
+			AREL::Prev =>  {
 				self.0.att( "rel".to_string() , "prev".to_string() )  ;
 				return self  ;}
-			ARel::Search =>  {
+			AREL::Search =>  {
 				self.0.att( "rel".to_string() , "search".to_string() )  ;
 				return self  ;}
-			ARel::Tag =>  {
+			AREL::Tag =>  {
 				self.0.att( "rel".to_string() , "tag".to_string() )  ;
 				return self  ;}}}
 	pub fn novalidate( &mut self ) -> &mut Self  {
@@ -284,23 +359,26 @@ impl A  {
 	pub fn action( &mut self , url:&str ) -> &mut Self  {
 		self.0.att( "action".to_string() , url.to_string() )  ;
 		return self  ;}
-	pub fn method( &mut self , x:Method ) -> &mut Self  {
+	pub fn p( &mut self , x:METHOD ) -> &mut Self  {
 		match x  {
-			Method::Get =>  {
+			METHOD::Get =>  {
 				self.0.att( "method".to_string() , "get".to_string() )  ;
 				return self  ;}
-			Method::Post =>  {
+			METHOD::Post =>  {
 				self.0.att( "method".to_string() , "post".to_string() )  ;
+				return self  ;}
+			METHOD::Patch =>  {
+				self.0.att( "method".to_string() , "patch".to_string() )  ;
 				return self  ;}}}
-	pub fn enctype( &mut self , x:Enctype ) -> &mut Self  {
+	pub fn enctype( &mut self , x:ENCTYPE ) -> &mut Self  {
 		match x  {
-			Enctype::Application =>  {
+			ENCTYPE::Application =>  {
 				self.0.att( "enctype".to_string() , "application/x-www-form-urlencoded".to_string() )  ;
 				return self  ;}
-			Enctype::Multipart =>  {
+			ENCTYPE::Multipart =>  {
 				self.0.att( "enctype".to_string() , "multipart/form-data".to_string() )  ;
 				return self  ;}
-			Enctype::Text =>  {
+			ENCTYPE::Text =>  {
 				self.0.att( "enctype".to_string() , "text/plain".to_string() )  ;
 				return self  ;}}}
 	pub fn autocomplete( &mut self , on:bool ) -> &mut Self  {
@@ -309,51 +387,51 @@ impl A  {
 		else  {
 			self.0.att( "autocomplete".to_string() , "off".to_string() )  ;}
 		return self  ;}}
-impl Form  {
-	pub fn target( &mut self , x:Target ) -> &mut Self  {
+impl FORM  {
+	pub fn target( &mut self , x:TARGET ) -> &mut Self  {
 		match x  {
-			Target::Blank =>  {
+			TARGET::Blank =>  {
 				self.0.att( "rel".to_string() , "_blank".to_string() )  ;
 				return self  ;}
-			Target::Self_ =>  {
+			TARGET::Self_ =>  {
 				self.0.att( "rel".to_string() , "_self".to_string() )  ;
 				return self  ;}
-			Target::Parent =>  {
+			TARGET::Parent =>  {
 				self.0.att( "rel".to_string() , "_parent".to_string() )  ;
 				return self  ;}
-			Target::Top =>  {
+			TARGET::Top =>  {
 				self.0.att( "rel".to_string() , "_top".to_string() )  ;
 				return self  ;}}}
-	pub fn rel( &mut self , x:FormRel ) -> &mut Self  {
+	pub fn rel( &mut self , x:FORMREL ) -> &mut Self  {
 		match x  {
-			FormRel::External =>  {
+			FORMREL::External =>  {
 				self.0.att( "rel".to_string() , "external".to_string() )  ;
 				return self  ;}
-			FormRel::Help =>  {
+			FORMREL::Help =>  {
 				self.0.att( "rel".to_string() , "help".to_string() )  ;
 				return self  ;}
-			FormRel::License =>  {
+			FORMREL::License =>  {
 				self.0.att( "rel".to_string() , "license".to_string() )  ;
 				return self  ;}
-			FormRel::Next =>  {
+			FORMREL::Next =>  {
 				self.0.att( "rel".to_string() , "next".to_string() )  ;
 				return self  ;}
-			FormRel::Nofollow =>  {
+			FORMREL::Nofollow =>  {
 				self.0.att( "rel".to_string() , "nofollow".to_string() )  ;
 				return self  ;}
-			FormRel::Noopener =>  {
+			FORMREL::Noopener =>  {
 				self.0.att( "rel".to_string() , "noopener".to_string() )  ;
 				return self  ;}
-			FormRel::Noreferrer =>  {
+			FORMREL::Noreferrer =>  {
 				self.0.att( "rel".to_string() , "noreferrer".to_string() )  ;
 				return self  ;}
-			FormRel::Opener =>  {
+			FORMREL::Opener =>  {
 				self.0.att( "rel".to_string() , "opener".to_string() )  ;
 				return self  ;}
-			FormRel::Prev =>  {
+			FORMREL::Prev =>  {
 				self.0.att( "rel".to_string() , "prev".to_string() )  ;
 				return self  ;}
-			FormRel::Search =>  {
+			FORMREL::Search =>  {
 				self.0.att( "rel".to_string() , "search".to_string() )  ;
 				return self  ;}}}
 	pub fn novalidate( &mut self ) -> &mut Self  {
@@ -368,23 +446,26 @@ impl Form  {
 	pub fn action( &mut self , url:&str ) -> &mut Self  {
 		self.0.att( "action".to_string() , url.to_string() )  ;
 		return self  ;}
-	pub fn method( &mut self , x:Method ) -> &mut Self  {
+	pub fn method( &mut self , x:METHOD ) -> &mut Self  {
 		match x  {
-			Method::Get =>  {
+			METHOD::Get =>  {
 				self.0.att( "method".to_string() , "get".to_string() )  ;
 				return self  ;}
-			Method::Post =>  {
+			METHOD::Post =>  {
 				self.0.att( "method".to_string() , "post".to_string() )  ;
+				return self  ;}
+			METHOD::Patch =>  {
+				self.0.att( "method".to_string() , "patch".to_string() )  ;
 				return self  ;}}}
-	pub fn enctype( &mut self , x:Enctype ) -> &mut Self  {
+	pub fn enctype( &mut self , x:ENCTYPE ) -> &mut Self  {
 		match x  {
-			Enctype::Application =>  {
+			ENCTYPE::Application =>  {
 				self.0.att( "enctype".to_string() , "application/x-www-form-urlencoded".to_string() )  ;
 				return self  ;}
-			Enctype::Multipart =>  {
+			ENCTYPE::Multipart =>  {
 				self.0.att( "enctype".to_string() , "multipart/form-data".to_string() )  ;
 				return self  ;}
-			Enctype::Text =>  {
+			ENCTYPE::Text =>  {
 				self.0.att( "enctype".to_string() , "text/plain".to_string() )  ;
 				return self  ;}}}
 	pub fn autocomplete( &mut self , on:bool ) -> &mut Self  {
@@ -393,24 +474,24 @@ impl Form  {
 		else  {
 			self.0.att( "autocomplete".to_string() , "off".to_string() )  ;}
 		return self  ;}}
-impl Img  {
+impl IMG  {
 	pub fn src( &mut self , val:&str ) -> &mut Self  {
 		self.0.att( "src".to_string() , val.to_string() )  ;
 		return self  ;}}
-impl Source  {
+impl SOURCE  {
 	pub fn src( &mut self , val:&str ) -> &mut Self  {
 		self.0.att( "src".to_string() , val.to_string() )  ;
 		return self  ;}}
-impl Video  {
-	pub fn preload( &mut self , x:Preload ) -> &mut Self  {
+impl VIDEO  {
+	pub fn preload( &mut self , x:PRELOAD) -> &mut Self  {
 		match x  {
-			Preload::Auto =>  {
+			PRELOAD::Auto =>  {
 				self.0.att( "preload".to_string() , "auto".to_string() )  ;
 				return self  ;}
-			Preload::Metadata =>  {
+			PRELOAD::Metadata =>  {
 				self.0.att( "preload".to_string() , "metadata".to_string() )  ;
 				return self  ;}
-			Preload::None =>  {
+			PRELOAD::None =>  {
 				self.0.att( "preload".to_string() , "none".to_string() )  ;
 				return self  ;}}}
 	pub fn autoplay( &mut self ) -> &mut Self  {
@@ -437,7 +518,7 @@ impl Video  {
 	pub fn height( &mut self , x:i32 ) -> &mut Self  {
 		self.0.att( "height".to_string() , x.to_string() )  ;
 		return self  ;}}
-impl Select  {
+impl SELECT  {
 	pub fn autofocus( &mut self ) -> &mut Self  {
 		self.0.att( "autofocus".to_string() , "".to_string() )  ;
 		return self  ;}
@@ -456,17 +537,23 @@ impl Select  {
 	pub fn onchange( &mut self ,f:&str ) -> &mut Self  {
 		self.0.att( "onchange".to_string() , f.to_string() )  ;
 		return self  ;}}
-impl Option  {
+impl OPTION  {
 	pub fn disabled( &mut self ) -> &mut Self  {
 		self.0.att( "disabled".to_string() , "".to_string() )  ;
 		return self  ;}
 	pub fn selected( &mut self ) -> &mut Self  {
 		self.0.att( "selected".to_string() , "".to_string() )  ;
 		return self  ;}
+	pub fn hidden( &mut self ) -> &mut Self  {
+		self.0.att( "hidden".to_string() , "".to_string() )  ;
+		return self  ;}
 	pub fn value( &mut self , x:&str ) -> &mut Self  {
 		self.0.att( "value".to_string() , x.to_string() )  ;
 		return self  ;}}
-impl Button  {
+impl BUTTON  {
+	pub fn formaction( &mut self , val:&str ) -> &mut Self  {
+		self.0.att( "formaction".to_string() , format!("{}" , val.to_string() ) )  ;
+		return self  ;}
 	pub fn autofocus( &mut self ) -> &mut Self  {
 		self.0.att( "autofocus".to_string() , "".to_string() )  ;
 		return self  ;}
@@ -479,7 +566,7 @@ impl Button  {
 	pub fn value( &mut self , x:&str ) -> &mut Self  {
 		self.0.att( "value".to_string() , x.to_string() )  ;
 		return self  ;}}
-impl Input  {
+impl INPUT  {
 	pub fn multiple(&mut self) -> &mut Self  {
 		self.0.att( "multiple".to_string() ,"".to_string() )  ;
 		return self  ;}
@@ -488,6 +575,12 @@ impl Input  {
 		return self  ;}
 	pub fn value( &mut self , val:&str ) -> &mut Self  {
 		self.0.att( "value".to_string() , format!("{}" , val.to_string() ) )  ;
+		return self  ;}
+	pub fn formaction( &mut self , val:&str ) -> &mut Self  {
+		self.0.att( "formaction".to_string() , format!("{}" , val.to_string() ) )  ;
+		return self  ;}
+	pub fn title( &mut self , val:&str ) -> &mut Self  {
+		self.0.att( "title".to_string() , format!("{}" , val.to_string() ) )  ;
 		return self  ;}
 	pub fn size( &mut self , val:i32 ) -> &mut Self  {
 		self.0.att( "size".to_string() , format!("{}" , val.to_string() ) )  ;
@@ -544,72 +637,72 @@ impl Input  {
 		if !b  {
 			panic!("\n\nTHE 'accept' ATT IS ONLY VALID FOR ATT: type='text||file'\n\n")  ;}
 		return self  ;}
-	pub fn type_( &mut self , val:Type ) -> &mut Self  {
+	pub fn type_( &mut self , val:TYPE) -> &mut Self  {
 		match val  {
-			Type::Button =>  {
+			TYPE::Button =>  {
 				self.0.att( "type".to_string() , "button".to_string() )  ;
 				return self  ;}
-			Type::Checkbox =>  {
+			TYPE::Checkbox =>  {
 				self.0.att( "type".to_string() , "checkbox".to_string() )  ;
 				return self  ;}
-			Type::Color =>  {
+			TYPE::Color =>  {
 				self.0.att( "type".to_string() , "color".to_string() )  ;
 				return self  ;}
-			Type::Date =>  {
+			TYPE::Date =>  {
 				self.0.att( "type".to_string() , "date".to_string() )  ;
 				return self  ;}
-			Type::DatetimeLocal =>  {
+			TYPE::DatetimeLocal =>  {
 				self.0.att( "type".to_string() , "datetimeLocal".to_string() )  ;
 				return self  ;}
-			Type::Email =>  {
+			TYPE::Email =>  {
 				self.0.att( "type".to_string() , "email".to_string() )  ;
 				return self  ;}
-			Type::File =>  {
+			TYPE::File =>  {
 				self.0.att( "type".to_string() , "file".to_string() )  ;
 				return self  ;}
-			Type::Hidden =>  {
+			TYPE::Hidden =>  {
 				self.0.att( "type".to_string() , "hidden".to_string() )  ;
 				return self  ;}
-			Type::Image =>  {
+			TYPE::Image =>  {
 				self.0.att( "type".to_string() , "image".to_string() )  ;
 				return self  ;}
-			Type::Month =>  {
+			TYPE::Month =>  {
 				self.0.att( "type".to_string() , "month".to_string() )  ;
 				return self  ;}
-			Type::Number =>  {
+			TYPE::Number =>  {
 				self.0.att( "type".to_string() , "number".to_string() )  ;
 				return self  ;}
-			Type::Password =>  {
+			TYPE::Password =>  {
 				self.0.att( "type".to_string() , "password".to_string() )  ;
 				return self  ;}
-			Type::Radio =>  {
+			TYPE::Radio =>  {
 				self.0.att( "type".to_string() , "radio".to_string() )  ;
 				return self  ;}
-			Type::Range =>  {
+			TYPE::Range =>  {
 				self.0.att( "type".to_string() , "range".to_string() )  ;
 				return self  ;}
-			Type::Reset =>  {
+			TYPE::Reset =>  {
 				self.0.att( "type".to_string() , "reset".to_string() )  ;
 				return self  ;}
-			Type::Search =>  {
+			TYPE::Search =>  {
 				self.0.att( "type".to_string() , "search".to_string() )  ;
 				return self  ;}
-			Type::Submit =>  {
+			TYPE::Submit =>  {
 				self.0.att( "type".to_string() , "submit".to_string() )  ;
 				return self  ;}
-			Type::Tel =>  {
+			TYPE::Tel =>  {
 				self.0.att( "type".to_string() , "tel".to_string() )  ;
 				return self  ;}
-			Type::Text =>  {
+			TYPE::Text =>  {
 				self.0.att( "type".to_string() , "text".to_string() )  ;
 				return self  ;}
-			Type::Time =>  {
+			TYPE::Time =>  {
 				self.0.att( "type".to_string() , "time".to_string() )  ;
 				return self  ;}
-			Type::Url =>  {
+			TYPE::Url =>  {
 				self.0.att( "type".to_string() , "url".to_string() )  ;
 				return self  ;}
-			Type::Week =>  {
+			TYPE::Week =>  {
 				self.0.att( "type".to_string() , "week".to_string() )  ;
 				return self  ;}}}
 	pub fn onchange( &mut self ,f:&str ) -> &mut Self  {
@@ -617,8 +710,21 @@ impl Input  {
 		return self  ;}
 	pub fn oninput( &mut self ,f:&str ) -> &mut Self  {
 		self.0.att( "onchange".to_string() , f.to_string() )  ;
+		return self  ;}
+	pub fn oninvalid( &mut self ,f:&str ) -> &mut Self  {
+		self.0.att( "oninvalid".to_string() , f.to_string() )  ;
+		return self  ;}
+	pub fn required(&mut self) -> &mut Self  {
+		self.0.att( "required".to_string() , "".to_string() )  ;
+		return self  ;}
+	// FICTIONAL ATTRIBUTES  ;
+	pub fn required_with(&mut self ,validation_message:&str) -> &mut Self  {
+		self.0.att( "required".to_string() , "".to_string() )  ;
+		if validation_message != ""  {
+			self.0.att("oninvalid".to_string()    ,format!("this.setCustomValidity(\"{}\")" ,validation_message))  ;
+			self.0.att("oninput".to_string()    ,"this.setCustomValidity(\"\")".to_string())  ;}
 		return self  ;}}
-impl Textarea  {
+impl TEXTAREA  {
 	pub fn autofocus( &mut self ) -> &mut Self  {
 		self.0.att( "autofocus".to_string() , "".to_string() )  ;
 		return self  ;}
