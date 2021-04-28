@@ -1,6 +1,7 @@
 # html dsl
+by [ontology](https://onto.logy.at) 
 
-## DISCLAIMER
+## disclaimer
 this is an html dsl library for rust, not an html template. not complete but easily extensible.
 
 ## rational
